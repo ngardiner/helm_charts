@@ -1,0 +1,169 @@
+# Default values for misp.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  repository: ghcr.io/misp/misp-docker/misp-core
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart
+  # appVersion. N.B. in the particular case of coolacid's
+  # Dockerization of MISP, the misp-docker repo has multiple different
+  # images, and the tags not only distinguish between versions, but
+  # also between images.
+  tag: "latest"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+
+  #
+  # It appears some of the supervisord scripts need to be root,
+  # because they write files in /etc/cron.d.
+  #
+  
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: false
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: chart-example.local
+      paths: []
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+global:
+  storageClass: local-path
+
+# Mariadb chart defaults to a single node.
+mariadb:
+  # If you don't set mariadb.auth.password and
+  # mariadb.auth.root_password, you cannot effectively helm upgrade
+  # this chart.
+  auth:
+    username: misp
+    database: misp
+  image:
+    # Without this, you don't get any logs the database server puts
+    # out, only nice colorful things said by supervisord scripts, such
+    # as "===> Starting the database."
+    debug: true
+  primary:
+    persistence:
+      enabled: true
+      storageClass: local-path
+      size: 1Gi
+
+# Redis chart settings here are for a single node.
+redis:
+  usePassword: false
+  cluster:
+    enabled: false
+  master:
+    persistence:
+      storageClass: local-path
+
+mispModules:
+  enabled: true
+  # A hostname to connect to Redis. Ignored if empty.
+  redis:
+    hostname: ""
+
+# "Initialize MISP. includes attempting to import SQL and the Files DIR"
+initialSetup: true
+
+# Creating the GNUPG secrets:
+#     pwgen -s 32
+#     kubectl create secret -n misp generic --from-literal='passphrase=<PASSPHRASE>' misp-gnupg-passphrase
+#     cd /tmp
+#     mkdir mgpgh
+#     gpg --homedir=mgpgh --gen-key
+#     # ^^ when you are generating the key you say what email address it is for
+#     mkdir mgpghs
+#     gpg --homedir=mgpgh --export-secret-keys -a -o mgpghs/gnupg-private-key
+#     kubectl create secret -n misp generic --from-file=mgpghs misp-gnupg-private-key
+#     rm -rf mgpgh mgpghs
+ 
+gnupg:
+  # A Secret containing a GnuPG private key. You must construct this
+  # yourself.
+  privateKeySecret: "misp-gnupg-private-key"
+  # A Secret with the passphrase to unlock the private key.
+  passphraseSecret: "misp-gnupg-passphrase"
+  # The email address for which the key was created.
+  emailAddress: "misp@example.com"
+  # This is constructed by the container's scripts; don't change it
+  homeDirectory: "/var/www/.gnupg"
+  passphraseFile: "/var/www/.gnupg-passphrase"
+  importing:
+    image:
+      repository: 'olbat/gnupg'
+      pullPolicy: IfNotPresent
+      tag: 'light'
+
+# Authentication/authorization via OpenID Connect. See
+# <https://github.com/MISP/MISP/tree/2.4/app/Plugin/OidcAuth>. Values
+# here are named with snake_case according to the convention in that
+# documentation, not camelCase as is usual with Helm.
+oidc:
+  # Use OIDC for authn/authz.
+  enabled: false
+  provider_url: "https://keycloak.example.com/auth/realms/example_realm/protocol/openid-connect/auth"
+  client_id: "misp"
+  client_secret: "01234567-5768-abcd-cafe-012345670123"

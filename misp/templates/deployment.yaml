@@ -1,0 +1,153 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "misp.fullname" . }}
+  labels:
+    {{- include "misp.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "misp.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "misp.selectorLabels" . | nindent 8 }}
+    spec:
+      volumes:
+        - name: gnupg-home
+          emptyDir: {}
+        {{- with .Values.gnupg }}
+        - name: private-key
+          secret:
+            secretName: {{ .privateKeySecret }}
+        - name: passphrase
+          secret:
+            secretName: {{ .passphraseSecret }}
+        {{- end }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "misp.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      initContainers:
+        - name: "gnupg-import"
+          securityContext:
+            runAsNonRoot: true
+            {{- /* FIXME: is this always right? */}}
+            runAsUser: 33
+          {{- with .Values.gnupg }}
+          {{- with .importing.image }}
+          image: {{ printf "%s:%s" .repository .tag | quote }}
+          imagePullPolicy: {{ .pullPolicy }}
+          {{- end }}
+          volumeMounts:
+            - name: private-key
+              mountPath: /tmp/misp-gpg.priv
+              subPath: gnupg-private-key
+            - name: passphrase
+              mountPath: /tmp/misp-gpg.passphrase
+              subPath: passphrase
+            - name: gnupg-home
+              mountPath: {{ .homeDirectory }}
+          command:
+            - 'gpg'
+            - '--homedir'
+            - {{ .homeDirectory }}
+            - '--batch'
+            - '--passphrase-file'
+            - '/tmp/misp-gpg.passphrase'
+            - '--import'
+            - '/tmp/misp-gpg.priv'
+          {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            # this is what coolacid's docker compose.yml says
+            - name: CRON_USER_ID
+              value: "1"
+            # "Initialize MISP, things includes, attempting to import SQL and the Files DIR"
+            - name: INIT
+              value: {{ .Values.initialSetup | quote }}
+            # Don't redirect port 80 traffic to port 443.
+            - name: NOREDIR
+              value: "true"
+            - name: HOSTNAME
+              {{- if .Values.ingress.enabled }}
+              value: {{ printf "https://%s" (mustFirst .Values.ingress.hosts).host | quote }}
+              {{- else }}
+              value: {{ printf "http://%s" (include "misp.fullname" .) | quote }}
+              {{- end }}
+            - name: MYSQL_HOST
+              {{/* FIXME: can't use the mariadb.primary.fullname template because it gets evaluated in the context of this chart, and doesn't work right */}}
+              value: {{ .Release.Name }}-mariadb
+            # we allow MYSQL_PORT to take its default
+            - name: MYSQL_DATABASE
+              value: {{ .Values.mariadb.auth.database }}
+            - name: MYSQL_USER
+              value: {{ .Values.mariadb.auth.username }}
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ printf "%s-%s" .Release.Name "mariadb" | quote }}
+                  key: mariadb-password
+            - name: REDIS_FQDN
+              value: {{ .Release.Name }}-redis-master
+            {{- if .Values.mispModules.enabled }}
+            - name: MISP_MODULES_FQDN
+              value: {{ printf "http://%s" (include "mispModules.fullname" .) | quote }}
+            {{- end }}
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+            - name: https
+              containerPort: 443
+              protocol: TCP
+          volumeMounts:
+            - name: passphrase
+              mountPath: {{ .Values.gnupg.passphraseFile }}
+              subPath: passphrase
+            - name: gnupg-home
+              mountPath: {{ .Values.gnupg.homeDirectory }}
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+          startupProbe:
+            httpGet:
+              path: /
+              port: http
+            timeoutSeconds: 5
+            failureThreshold: 200
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      

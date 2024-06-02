@@ -1,0 +1,15 @@
+apiVersion: v2
+name: misp-modules
+description: 'Unofficial chart for MISP Modules, "autonomous modules that can be used for expansion and other services in MISP," written in Python rather than PHP.'
+type: application
+version: 0.1.0
+# coolacid puts both MISP core and MISP modules in the same
+# hub.docker.com repo. If you override the tag, be sure to include
+# "modules-" in your override.
+appVersion: "modules-v2.4.136a"
+sources:
+  - https://github.com/coolacid/docker-misp
+maintainers:
+  - name: "Jared Jennings"
+    email: "jjennings@fastmail.fm"
+icon: https://www.misp-project.org/assets/images/misp-small.png
