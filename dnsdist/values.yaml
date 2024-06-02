@@ -3,7 +3,7 @@ fullnameOverride: ""
 healthCheckHeaders: {}
 image:
   pullPolicy: IfNotPresent
-  repository: ngardiner/pdns-dnsdist:arm64-1.0
+  repository: ngardiner/pdns-dnsdist:arm64-1.9.4.12
 imagePullSecrets: []
 ingress:
   annotations: {}
