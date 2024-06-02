@@ -24,3 +24,10 @@ gpg --homedir=mgpgh --export-secret-keys -a -o mgpghs/gnupg-private-key
 kubectl create secret -n misp generic --from-file=mgpghs misp-gnupg-private-key
 rm -rf mgpgh mgpghs
 ```
+
+# Architectures
+
+   * For amd64, this helm chart will work out of the box
+   * For arm64, this helm chart works for all components except for the gpg helper.
+
+To get this to work for arm64, set gnupg.importing.image.repository to ```docker.io/ngardinerau/gnupg``` and gnupg.importing.image.tag to ```arm64-1.0```.
