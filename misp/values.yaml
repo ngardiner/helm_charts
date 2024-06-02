@@ -113,8 +113,7 @@ mariadb:
 # Redis chart settings here are for a single node.
 redis:
   usePassword: false
-  cluster:
-    enabled: false
+  architecture: standalone
   master:
     persistence:
       storageClass: local-path
