@@ -1,0 +1,27 @@
+affinity: {}
+fullnameOverride: ""
+healthCheckHeaders: {}
+image:
+  pullPolicy: IfNotPresent
+  repository: ngardiner/pdns-dnsdist:arm64-1.0
+imagePullSecrets: []
+ingress:
+  annotations: {}
+  enabled: false
+  hosts:
+  - host: chart-example.local
+    paths: []
+  tls: []
+nameOverride: ""
+nodeSelector: {}
+podSecurityContext: {}
+replicaCount: 1
+resources: {}
+securityContext: {}
+service:
+  port: 53
+  type: ClusterIP
+serviceAccount:
+  create: true
+  name: null
+tolerations: []

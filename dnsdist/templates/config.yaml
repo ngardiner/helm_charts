@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "dnsdist.fullname" . }}-config
+  annotations:
+  labels:
+    {{- include "dnsdist.labels" . | nindent 4 }}
+data:
+  dnsdist.conf: |
+    -- disable security status polling via DNS
+    setSecurityPollSuffix("")
+
+    -- start the web server on port 8083, using password 'set a random password here'
+    -- webserver("0.0.0.0:8083", "set a random password here")
+
+    -- accept DNS queries on UDP/53 and TCP/53
+    addLocal("0.0.0.0:53")
+
+    -- define the good servers
+    newServer("8.8.8.8", 2)  -- 2 qps
+    newServer("8.8.4.4", 2)
+
+    -- switch the server balancing policy to round robin,
+    -- the default being least outstanding queries
+    -- setServerPolicy(roundrobin)
+
+    -- send the queries for selected domain suffixes to the server
+    -- in the 'abuse' pool
+    addAction({"ezdns.it.", "xxx."}, PoolAction("abuse"))
