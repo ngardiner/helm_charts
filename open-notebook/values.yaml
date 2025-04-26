@@ -31,3 +31,13 @@ volumes:
     name: surreal_data
   notebook_data:
     name: notebook_data
+
+persistence:
+  surreal_data:
+    enabled: true
+    size: 5Gi
+    storageClass: default
+  notebook_data:
+    enabled: true
+    size: 5Gi
+    storageClass: default

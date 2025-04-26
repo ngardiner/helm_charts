@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: surrealdb
-          image: {{ .Values.surrealdb.image }}
+          image: "{{ .Values.image.surrealdb.repository }}:{{ .Values.image.surrealdb.tag }}"
           ports:
             - containerPort: 8000
           volumeMounts:
@@ -45,24 +45,24 @@ spec:
     spec:
       containers:
         - name: open-notebook
-          image: {{ .Values.open_notebook.image }}
+          image: "{{ .Values.image.open_notebook.repository }}:{{ .Values.image.open_notebook.tag }}"
           ports:
             - containerPort: 8502
           env:
             - name: OPENAI_API_KEY
-              value: {{ .Values.open_notebook.OPENAI_API_KEY }}
+              value: "{{ .Values.environment.open_notebook.OPENAI_API_KEY }}"
             - name: SURREAL_ADDRESS
-              value: surrealdb
+              value: "{{ .Values.environment.open_notebook.SURREAL_ADDRESS }}"
             - name: SURREAL_PORT
-              value: "8000"
+              value: "{{ .Values.environment.open_notebook.SURREAL_PORT }}"
             - name: SURREAL_USER
-              value: root
+              value: "{{ .Values.environment.open_notebook.SURREAL_USER }}"
             - name: SURREAL_PASS
-              value: root
+              value: "{{ .Values.environment.open_notebook.SURREAL_PASS }}"
             - name: SURREAL_NAMESPACE
-              value: open_notebook
+              value: "{{ .Values.environment.open_notebook.SURREAL_NAMESPACE }}"
             - name: SURREAL_DATABASE
-              value: open_notebook
+              value: "{{ .Values.environment.open_notebook.SURREAL_DATABASE }}"
           volumeMounts:
             - name: notebook-data
               mountPath: /app/data
