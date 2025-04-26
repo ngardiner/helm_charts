@@ -50,8 +50,4 @@ ingress:
       paths:
         - path: /
           pathType: ImplementationSpecific
-    - host: backend.local
-      paths:
-        - path: /
-          pathType: ImplementationSpecific
   tls: []

@@ -18,9 +18,9 @@ spec:
             pathType: {{ .pathType }}
             backend:
               service:
-                name: {{ $host | replace "frontend.local" "frontend" | replace "backend.local" "backend" }}
+                name: "frontend"
                 port:
-                  number: {{ .Values.service.frontend.port }}
+                  number: {{ $.Values.service.frontend.port }}
           {{- end }}
     {{- end }}
   {{- if .Values.ingress.tls }}
