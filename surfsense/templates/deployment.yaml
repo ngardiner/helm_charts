@@ -1,0 +1,87 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+        - name: frontend
+          image: "{{ .Values.image.frontend.repository }}:{{ .Values.image.frontend.tag }}"
+          ports:
+            - containerPort: 3000
+          env:
+            - name: NEXT_PUBLIC_API_URL
+              value: "{{ .Values.environment.frontend.NEXT_PUBLIC_API_URL }}"
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+        - name: backend
+          image: "{{ .Values.image.backend.repository }}:{{ .Values.image.backend.tag }}"
+          ports:
+            - containerPort: 8000
+          env:
+            - name: DATABASE_URL
+              value: "{{ .Values.environment.backend.DATABASE_URL }}"
+            - name: PYTHONPATH
+              value: "{{ .Values.environment.backend.PYTHONPATH }}"
+            - name: UVICORN_LOOP
+              value: "{{ .Values.environment.backend.UVICORN_LOOP }}"
+            - name: UNSTRUCTURED_HAS_PATCHED_LOOP
+              value: "{{ .Values.environment.backend.UNSTRUCTURED_HAS_PATCHED_LOOP }}"
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: db
+  template:
+    metadata:
+      labels:
+        app: db
+    spec:
+      containers:
+        - name: db
+          image: "{{ .Values.image.db.repository }}:{{ .Values.image.db.tag }}"
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_USER
+              value: "{{ .Values.environment.db.POSTGRES_USER }}"
+            - name: POSTGRES_PASSWORD
+              value: "{{ .Values.environment.db.POSTGRES_PASSWORD }}"
+            - name: POSTGRES_DB
+              value: "{{ .Values.environment.db.POSTGRES_DB }}"
+          volumeMounts:
+            - name: db-data
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: db-data
+          persistentVolumeClaim:
+            claimName: db-data-pvc

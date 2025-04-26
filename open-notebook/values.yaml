@@ -41,3 +41,13 @@ persistence:
     enabled: true
     size: 5Gi
     storageClass: default
+
+ingress:
+  enabled: false
+  annotations: {}
+  hosts:
+    - host: open-notebook.local
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls: []

@@ -1,0 +1,57 @@
+image:
+  frontend:
+    repository: surfsense/frontend
+    tag: latest
+    pullPolicy: IfNotPresent
+  backend:
+    repository: surfsense/backend
+    tag: latest
+    pullPolicy: IfNotPresent
+  db:
+    repository: ankane/pgvector
+    tag: latest
+    pullPolicy: IfNotPresent
+
+service:
+  frontend:
+    type: ClusterIP
+    port: 3000
+  backend:
+    type: ClusterIP
+    port: 8000
+  db:
+    type: ClusterIP
+    port: 5432
+
+environment:
+  frontend:
+    NEXT_PUBLIC_API_URL: "http://backend:8000"
+  backend:
+    DATABASE_URL: "postgresql+asyncpg://postgres:postgres@db:5432/surfsense"
+    PYTHONPATH: "/app"
+    UVICORN_LOOP: "asyncio"
+    UNSTRUCTURED_HAS_PATCHED_LOOP: "1"
+  db:
+    POSTGRES_USER: "postgres"
+    POSTGRES_PASSWORD: "postgres"
+    POSTGRES_DB: "surfsense"
+
+persistence:
+  db:
+    enabled: true
+    size: 5Gi
+    storageClass: standard
+
+ingress:
+  enabled: false
+  annotations: {}
+  hosts:
+    - host: frontend.local
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+    - host: backend.local
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls: []
