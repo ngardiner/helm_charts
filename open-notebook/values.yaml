@@ -1,0 +1,33 @@
+image:
+  surrealdb:
+    repository: surrealdb/surrealdb
+    tag: v2
+    pullPolicy: Always
+  open_notebook:
+    repository: lfnovo/open_notebook
+    tag: latest
+    pullPolicy: Always
+
+service:
+  surrealdb:
+    enabled: true
+    port: 8000
+  open_notebook:
+    enabled: true
+    port: 8080
+
+environment:
+  open_notebook:
+    OPENAI_API_KEY: "API_KEY"
+    SURREAL_ADDRESS: "surrealdb"
+    SURREAL_PORT: 8000
+    SURREAL_USER: "root"
+    SURREAL_PASS: "root"
+    SURREAL_NAMESPACE: "open_notebook"
+    SURREAL_DATABASE: "open_notebook"
+
+volumes:
+  surreal_data:
+    name: surreal_data
+  notebook_data:
+    name: notebook_data

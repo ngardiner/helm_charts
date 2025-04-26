@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: surrealdb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: surrealdb
+  template:
+    metadata:
+      labels:
+        app: surrealdb
+    spec:
+      containers:
+        - name: surrealdb
+          image: {{ .Values.surrealdb.image }}
+          ports:
+            - containerPort: 8000
+          volumeMounts:
+            - name: surreal-data
+              mountPath: /mydata
+          command: ["start", "--user", "root", "--pass", "root", "rocksdb:/mydata/mydatabase.db"]
+          securityContext:
+            runAsUser: 0
+      volumes:
+        - name: surreal-data
+          persistentVolumeClaim:
+            claimName: surreal-data-pvc
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: open-notebook
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: open-notebook
+  template:
+    metadata:
+      labels:
+        app: open-notebook
+    spec:
+      containers:
+        - name: open-notebook
+          image: {{ .Values.open_notebook.image }}
+          ports:
+            - containerPort: 8502
+          env:
+            - name: OPENAI_API_KEY
+              value: {{ .Values.open_notebook.OPENAI_API_KEY }}
+            - name: SURREAL_ADDRESS
+              value: surrealdb
+            - name: SURREAL_PORT
+              value: "8000"
+            - name: SURREAL_USER
+              value: root
+            - name: SURREAL_PASS
+              value: root
+            - name: SURREAL_NAMESPACE
+              value: open_notebook
+            - name: SURREAL_DATABASE
+              value: open_notebook
+          volumeMounts:
+            - name: notebook-data
+              mountPath: /app/data
+      volumes:
+        - name: notebook-data
+          persistentVolumeClaim:
+            claimName: notebook-data-pvc

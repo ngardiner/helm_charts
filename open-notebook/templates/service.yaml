@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: surrealdb
+  labels:
+    app: surrealdb
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8000
+      targetPort: 8000
+      protocol: TCP
+  selector:
+    app: surrealdb
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: open-notebook
+  labels:
+    app: open-notebook
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8080
+      targetPort: 8502
+      protocol: TCP
+  selector:
+    app: open-notebook

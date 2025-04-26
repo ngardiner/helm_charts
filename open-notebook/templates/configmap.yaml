@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: open-notebook-config
+data:
+  OPENAI_API_KEY: "API_KEY"
+  SURREAL_ADDRESS: "surrealdb"
+  SURREAL_PORT: "8000"
+  SURREAL_USER: "root"
+  SURREAL_PASS: "root"
+  SURREAL_NAMESPACE: "open_notebook"
+  SURREAL_DATABASE: "open_notebook"
